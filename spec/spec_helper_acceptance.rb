@@ -3,13 +3,14 @@ require 'beaker-rspec/helpers/serverspec'
 
 
 unless ENV['RS_PROVISION'] == 'no'
+  if default.is_pe?
+    install_pe
+  else
+    install_puppet
+  end
+
   hosts.each do |host|
-    if host.is_pe?
-      install_pe
-    else
-      install_puppet
       on host, "mkdir -p #{host['distmoduledir']}"
-    end
   end
 end
 
@@ -27,7 +28,8 @@ RSpec.configure do |c|
     # Install module and dependencies
     puppet_module_install(:source => proj_root, :module_name => 'tomcat')
     hosts.each do |host|
-      on host, puppet('module','install','puppetlabs-stdlib'), { :acceptable_exit_codes => [0,1] }
+      on host, puppet('module','install','puppetlabs-stdlib','--force','--version','4.3.2'), { :acceptable_exit_codes => [0,1] }
+      on host, puppet('module','install','puppetlabs-concat','--version','1.0.4'), { :acceptable_exit_codes => [0,1] }
       on host, puppet('module','install','puppetlabs-java'), { :acceptable_exit_codes => [0,1] }
       on host, puppet('module','install','puppetlabs-gcc'), { :acceptable_exit_codes => [0,1] }
       on host, puppet('module','install','nanliu-staging'), { :acceptable_exit_codes => [0,1] }
